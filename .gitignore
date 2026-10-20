@@ -1,0 +1,5 @@
+*.local.json
+.azure/
+.vscode/
+.idea/
+*.log
