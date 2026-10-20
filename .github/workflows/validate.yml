@@ -1,0 +1,38 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pinned Bicep
+        shell: bash
+        run: |
+          az bicep install --version "$(cat .bicep-version)"
+          az bicep version
+
+      # Exactly what the README tells readers to run.
+      - name: Build and lint every template
+        shell: pwsh
+        run: ./tests/validate-all.ps1
+
+      - name: Contract tests (offline)
+        shell: pwsh
+        run: ./tests/contract-tests.ps1
+
+      - name: Equivalence 01 vs 02 (offline)
+        shell: pwsh
+        run: ./tests/what-if-equivalence.ps1
+
+      - name: Contract diff v1 -> v2 (informational)
+        shell: pwsh
+        run: ./tests/contract-diff.ps1 -Old 05-breaking-change/storage-v1.bicep -New 05-breaking-change/storage-v2.bicep

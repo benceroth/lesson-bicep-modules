@@ -1,0 +1,38 @@
+name: publish
+
+# Opt-in. Does nothing unless the repository variable PUBLISH_ENABLED is 'true' and the
+# variables/secrets below are configured. Runs only for version tags such as v1.0.0.
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    if: ${{ vars.PUBLISH_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    environment: registry
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pinned Bicep
+        run: az bicep install --version "$(cat .bicep-version)"
+
+      - name: Gate on offline validation
+        shell: pwsh
+        run: |
+          ./tests/validate-all.ps1
+          ./tests/contract-tests.ps1
+
+      - name: Sign in to Azure (OIDC, no stored secrets)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Publish module
+        run: ./04-registry/publish.sh "${{ vars.ACR_NAME }}" "${GITHUB_REF_NAME#v}"

@@ -1,0 +1,23 @@
+{
+  "moduleAliases": {
+    "br": {
+      "northstar": {
+        "registry": "northstarexample.azurecr.io",
+        "modulePath": "bicep/modules"
+      }
+    }
+  },
+  "analyzers": {
+    "core": {
+      "enabled": true,
+      "rules": {
+        "no-hardcoded-location": {
+          "level": "off"
+        },
+        "use-recent-api-versions": {
+          "level": "off"
+        }
+      }
+    }
+  }
+}
